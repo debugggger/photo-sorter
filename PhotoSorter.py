@@ -135,7 +135,7 @@ def main():
     root.geometry('%dx%d+%d+%d' % (width / 4, height / 3, x, y))
     root.minsize(int(width / 4), int(height / 3))
     root.maxsize(int(width / 2), int(height / 3))
-    root.iconphoto(True, tkinter.PhotoImage(file='./icon.png'))
+    #root.iconphoto(True, tkinter.PhotoImage(file='./icon.png'))
     root.title("Сортировщик фото")
     root.mainloop()
 

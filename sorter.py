@@ -111,13 +111,13 @@ class Sorter(object):
             self.PatchToExit = self.patch
             self.entryPatchToExit.insert(0, self.PatchToExit)
 
-
-
         self.procLbl.pack()
         self.btnStart.pack_forget()
 
+        exitErrorPatch = self.PatchToExit + "/error/"
+
         month_list = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь',
-                        'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь']
+                      'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь']
 
         for file in os.listdir(self.patch):
 
@@ -125,20 +125,24 @@ class Sorter(object):
             if os.path.isdir(current) and self.isDir == 1:
                 self.checkDirs(current, "work", month_list=month_list)
 
-
             if file.split('.')[-1] == 'jpg' or file.split('.')[-1] == 'JPG' or file.split('.')[-1] == 'png':
                 try:
                     with open(current, "rb") as current:
                         self.readDataFromImage(Image(current), file, self.patch, month_list)
                 except:
-                    self.errorCount+=1
-                    self.troubleFiles.append(self.patch + "/" + file+"\n")
+                    self.errorCount += 1
+                    self.troubleFiles.append(self.patch + "/" + file + "\n")
+                    if not os.path.exists(exitErrorPatch):
+                        os.makedirs(exitErrorPatch)
+                    shutil.copyfile(self.patch + "/" + file, exitErrorPatch + file)
             self.fineshedCount += 1
         if self.errorCount != 0:
-            self.app.messageWindow(self.app.Message.ERROR, "не удалось обработать " + str(self.errorCount) + " фото")
+            # self.app.messageWindow(self.app.Message.ERROR, "не удалось обработать: " + str(self.errorCount))
             self.troublesList.insert("end", "не удалось обработать:\n")
+
             for i in range(len(self.troubleFiles)):
                 self.troublesList.insert("end", self.troubleFiles[i])
+            self.troublesList.insert("end", "\n" + "Файлы размещены в: " + exitErrorPatch + "\n")
             self.troubleFrame.pack()
         else:
             self.app.messageWindow(self.app.Message.INFO, "обработка успешна завершена")
