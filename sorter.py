@@ -52,7 +52,8 @@ class Sorter(object):
             current = path + "/" + file
             if os.path.isdir(current):
                 self.checkDirs(current, mode, month_list=month_list)
-            if current.split('.')[-1] == 'jpg' or current.split('.')[-1] == 'JPG' or current.split('.')[-1] == 'png':
+            if current.split('.')[-1] == 'jpg' or current.split('.')[-1] == 'JPG' or current.split('.')[-1] == 'png'\
+                    or current.split('.')[-1] == 'PNG' or current.split('.')[-1] == 'mp4' or current.split('.')[-1] == 'MP4':
                 if mode == "find":
                     self.countImages += 1
                 if mode == "work":
@@ -74,7 +75,8 @@ class Sorter(object):
             if os.path.isdir(current) and self.isDir == 1:
                 self.checkDirs(current, "find")
 
-            if current.split('.')[-1] == 'jpg' or current.split('.')[-1] == 'JPG' or current.split('.')[-1] == 'png':
+            if current.split('.')[-1] == 'jpg' or current.split('.')[-1] == 'JPG' or current.split('.')[-1] == 'png'\
+                    or current.split('.')[-1] == 'PNG' or current.split('.')[-1] == 'mp4' or current.split('.')[-1] == 'MP4':
                 self.countImages += 1
 
         if self.countImages == 0:
@@ -125,7 +127,8 @@ class Sorter(object):
             if os.path.isdir(current) and self.isDir == 1:
                 self.checkDirs(current, "work", month_list=month_list)
 
-            if file.split('.')[-1] == 'jpg' or file.split('.')[-1] == 'JPG' or file.split('.')[-1] == 'png':
+            if file.split('.')[-1] == 'jpg' or file.split('.')[-1] == 'JPG' or file.split('.')[-1] == 'png'\
+                    or current.split('.')[-1] == 'PNG' or current.split('.')[-1] == 'mp4' or current.split('.')[-1] == 'MP4':
                 try:
                     with open(current, "rb") as current:
                         self.readDataFromImage(Image(current), file, self.patch, month_list)
