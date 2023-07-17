@@ -117,7 +117,7 @@ class App(Frame):
         answ = 0
         match type:
             case self.Message.WARNING: mb.showwarning("предупреждение", msg)
-            case self.Message.INFO: mb.showinfo("инофрмация", msg)
+            case self.Message.INFO: mb.showinfo("информация", msg)
             case self.Message.ERROR: mb.showerror("ошибка", msg)
             case self.Message.ASK_START: answ = mb.askokcancel("путь не задан", msg)
 

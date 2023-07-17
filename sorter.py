@@ -1,12 +1,11 @@
 import os
 import shutil
 import threading
-from datetime import date, datetime
+from datetime import datetime
 from tkinter import filedialog, END
 
-import datetime
+import time
 
-from exif import Image
 from threading import Thread
 
 class Sorter(object):
@@ -58,9 +57,9 @@ class Sorter(object):
                     self.countImages += 1
                 if mode == "work":
                     self.fineshedCount += 1
-                    with open(current, "rb") as current:
+                    with open(current, "rb"):
                         try:
-                            self.readDataFromImage(Image(current), file, path, month_list)
+                            self.readDataFromImage(file, path, month_list)
                         except:
                             self.errorCount += 1
                             self.troubleFiles.append(path + "/" + file+"\n")
@@ -81,8 +80,6 @@ class Sorter(object):
 
         if self.countImages == 0:
             self.app.messageWindow(self.app.Message.WARNING, "фото не найдены")
-        # else:
-        #     self.app.messageWindow(self.app.Message.INFO, "найдено " + str(self.countImages) + " фото")
 
     def startSort(self):
         threadSorting = Thread(target=self.sortByData)
@@ -130,8 +127,8 @@ class Sorter(object):
             if file.split('.')[-1] == 'jpg' or file.split('.')[-1] == 'JPG' or file.split('.')[-1] == 'png'\
                     or current.split('.')[-1] == 'PNG' or current.split('.')[-1] == 'mp4' or current.split('.')[-1] == 'MP4':
                 try:
-                    with open(current, "rb") as current:
-                        self.readDataFromImage(Image(current), file, self.patch, month_list)
+                    with open(current, "rb"):
+                        self.readDataFromImage(file, self.patch, month_list)
                 except:
                     self.errorCount += 1
                     self.troubleFiles.append(self.patch + "/" + file + "\n")
@@ -140,7 +137,6 @@ class Sorter(object):
                     shutil.copyfile(self.patch + "/" + file, exitErrorPatch + file)
             self.fineshedCount += 1
         if self.errorCount != 0:
-            # self.app.messageWindow(self.app.Message.ERROR, "не удалось обработать: " + str(self.errorCount))
             self.troublesList.insert("end", "не удалось обработать:\n")
 
             for i in range(len(self.troubleFiles)):
@@ -153,19 +149,21 @@ class Sorter(object):
         self.btnStart.pack()
         self.stopThread.set()
 
-    def readDataFromImage(self, image, file, patch, month_list=[]):
-        if image.has_exif:
-            data = str(image.datetime_original).split(':')
-            year = data[0]
-            month = data[1]
+    def readDataFromImage(self, file, patch, month_list=[]):
 
-            exitPatch = self.PatchToExit + "/" + year + "/" + month_list[int(month) - 1]
-            if not os.path.exists(exitPatch):
-                os.makedirs(exitPatch)
-            shutil.copyfile(patch + "/" + file, exitPatch + "/" + file)
+        ti_m = os.path.getmtime(patch+"/"+file)
+        dateStr = datetime.strptime(time.ctime(ti_m), "%a %b %d %H:%M:%S %Y")
 
-            percent = int(self.fineshedCount / self.countImages * 100)
-            if percent > 100:
-                percent = 100
-            self.procLbl.configure(text="обработано " + str(percent) + "%")
+        data = str(dateStr).split('-')
+        year = data[0]
+        month = data[1]
 
+        exitPatch = self.PatchToExit + "/" + year + "/" + month_list[int(month) - 1]
+        if not os.path.exists(exitPatch):
+            os.makedirs(exitPatch)
+        shutil.copyfile(patch + "/" + file, exitPatch + "/" + file)
+
+        percent = int(self.fineshedCount / self.countImages * 100)
+        if percent > 100:
+            percent = 100
+        self.procLbl.configure(text="обработано " + str(percent) + "%")
