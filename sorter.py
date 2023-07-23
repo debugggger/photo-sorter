@@ -3,13 +3,24 @@ import shutil
 import threading
 from datetime import datetime
 from tkinter import filedialog, END
-
-import time
-
 from threading import Thread
 
+from exif import Image
+import ffprobe
+
+
+
+import functools
+import operator
+import os
+import pipes
+import platform
+import re
+import subprocess
+from ffprobe.exceptions import FFProbeError
+
 class Sorter(object):
-    def __init__(self, app, entryPatch, entryPatchToExit, procLabel, btnStart, troubleFrame, troublesList):
+    def __init__(self, app, entryPatch, entryPatchToExit, procLabel, btnStart, troubleFrame, troublesList, entryDate1, entryDate2):
         self.patch = ''
         self.PatchToExit = ''
         self.countImages = 0
@@ -25,9 +36,19 @@ class Sorter(object):
         self.fineshedCount = 0
         self.troubleFiles = []
         self.errorCount = 0
+        self.date1 = ''
+        self.date2 = ''
+        self.entryDate1 = entryDate1
+        self.entryDate2 = entryDate2
+        self.startDate = datetime.strptime("1970-01-01", "%Y-%m-%d")
+        self.endDate = datetime.now()
 
     def setIsDir(self, var):
         self.isDir = var
+
+    def checkDate(self):
+        self.date1 = self.entryDate1.get()
+        self.date2 = self.entryDate2.get()
 
     def browsePatch(self):
         self.entryPatch.delete(0, END)
@@ -59,7 +80,7 @@ class Sorter(object):
                     self.fineshedCount += 1
                     with open(current, "rb"):
                         try:
-                            self.readDataFromImage(file, path, month_list)
+                            self.readDataFromImage(file, path, current.split('.')[-1], month_list)
                         except:
                             self.errorCount += 1
                             self.troubleFiles.append(path + "/" + file+"\n")
@@ -87,12 +108,27 @@ class Sorter(object):
 
     def sortByData(self):
 
-        # if self.date1 != '':
-        #     try:
-        #         datetime.datetime.strptime(str(self.date1), '%Y-%m-%d')
-        #     except:
-        #         self.app.messageWindow(self.app.Message.WARNING, "Укажите дату в формате YYYY-MM-DD")
-        #         return
+        self.date1 = self.entryDate1.get()
+        self.date2 = self.entryDate2.get()
+
+        if self.date1 != '':
+            try:
+                self.startDate = datetime.strptime(self.date1, "%Y-%m-%d")
+            except:
+                self.app.messageWindow(self.app.Message.WARNING, "Укажите дату в формате YYYY-MM-DD")
+                return
+            if self.date2 == '':
+                self.date2 = datetime.now().date()
+
+                self.entryDate2.insert("end", self.date2)
+            else:
+                if self.date2 > datetime.now():
+                    self.date2 = datetime.now().date()
+                try:
+                    self.endDate = datetime.strptime(self.date2, "%Y-%m-%d")
+                except:
+                    self.app.messageWindow(self.app.Message.WARNING, "Укажите дату в формате YYYY-MM-DD")
+
 
         self.findImages()
         if self.countImages == 0:
@@ -128,7 +164,7 @@ class Sorter(object):
                     or current.split('.')[-1] == 'PNG' or current.split('.')[-1] == 'mp4' or current.split('.')[-1] == 'MP4':
                 try:
                     with open(current, "rb"):
-                        self.readDataFromImage(file, self.patch, month_list)
+                        self.readDataFromImage(file, self.patch, file.split('.')[-1], month_list)
                 except:
                     self.errorCount += 1
                     self.troubleFiles.append(self.patch + "/" + file + "\n")
@@ -149,19 +185,67 @@ class Sorter(object):
         self.btnStart.pack()
         self.stopThread.set()
 
-    def readDataFromImage(self, file, patch, month_list=[]):
+    def readDataFromImage(self, file, patch, fileType, month_list=[]):
 
-        ti_m = os.path.getmtime(patch+"/"+file)
-        dateStr = datetime.strptime(time.ctime(ti_m), "%a %b %d %H:%M:%S %Y")
+        isFile = 0
+        year = 0
+        month = 0
+        dateStr = datetime.strptime("1900-01-01", "%Y-%m-%d")
+        if fileType == 'jpg' or fileType == 'JPG' or fileType == 'png' or fileType == 'PNG':
+            image = Image(patch + "/" + file)
+            if image.has_exif:
+                dateStr = image.datetime_original
+                isFile = 1
+                data = str(dateStr).split(':')
+                year = data[0]
+                month = data[1]
 
-        data = str(dateStr).split('-')
-        year = data[0]
-        month = data[1]
+        if fileType == 'mp4' or fileType == 'MP4':
 
-        exitPatch = self.PatchToExit + "/" + year + "/" + month_list[int(month) - 1]
-        if not os.path.exists(exitPatch):
-            os.makedirs(exitPatch)
-        shutil.copyfile(patch + "/" + file, exitPatch + "/" + file)
+            path_to_video = patch + "/" + file
+            try:
+                with open(os.devnull, 'w') as tempf:
+                    subprocess.check_call(["ffprobe", "-h"], stdout=tempf, stderr=tempf)
+            except FileNotFoundError:
+                raise IOError('ffprobe not found.')
+
+            if os.path.isfile(path_to_video):
+                if platform.system() == 'Windows':
+                    cmd = ["ffprobe", "-show_streams", path_to_video]
+                else:
+                    cmd = ["ffprobe -show_streams " + pipes.quote(path_to_video)]
+
+                p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+
+                stream = False
+
+                for line in iter(p.stdout.readline, b''):
+                    line = line.decode('UTF-8')
+
+                    if '[STREAM]' in line:
+                        stream = True
+                    elif '[/STREAM]' in line and stream:
+                        stream = False
+                    elif stream:
+                        if line.__contains__("TAG:creation_time"):
+                            data = str(line).split('=')
+                            metaDate = str(data[1]).split('T')
+                            break
+
+            dateStr = datetime.strptime(metaDate[0], "%Y-%m-%d").date()
+            isFile = 1
+            data = str(dateStr).split('-')
+            year = data[0]
+            month = data[1]
+
+
+
+        # if self.startDate.date() <= dateStr.date() and self.endDate.date() >= dateStr.date() and isFile == 1:
+        if isFile == 1:
+            exitPatch = self.PatchToExit + "/" + year + "/" + month_list[int(month) - 1]
+            if not os.path.exists(exitPatch):
+                os.makedirs(exitPatch)
+            shutil.copyfile(patch + "/" + file, exitPatch + "/" + file)
 
         percent = int(self.fineshedCount / self.countImages * 100)
         if percent > 100:

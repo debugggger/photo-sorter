@@ -24,7 +24,8 @@ class App(Frame):
         super().__init__()
         global sorter
         self.initUI()
-        sorter = Sorter(self, self.entryPatch, self.entryPatchToExit, self.lblProcess, self.btnStart, self.troubleFrame, self.troublesList)
+        sorter = Sorter(self, self.entryPatch, self.entryPatchToExit, self.lblProcess, self.btnStart, self.troubleFrame,
+                        self.troublesList, self.entryDate1, self.entryDate2)
         self.lblPatch = Label
         self.lblProcess = Label
         self.btnStart = Button
@@ -33,8 +34,8 @@ class App(Frame):
         self.boxUseDirs = Checkbutton
         self.troublesList = Text
         self.troubleFrame = Frame
-        # self.entryDate1 = Entry
-        # self.entryDate2 = Entry
+        self.entryDate1 = Entry
+        self.entryDate2 = Entry
 
     def initUI(self):
         self.pack(fill=BOTH, expand=True)
@@ -70,16 +71,16 @@ class App(Frame):
                  command=setIsDir)
         self.boxUseDirs.pack(side=LEFT, padx=5, pady=5)
 
-        # dateFrame = Frame(self)
-        # dateFrame.pack(side=TOP, fill=X)
-        # lblDate1 = Label(dateFrame, text="дата с:", width=8)
-        # lblDate1.pack(side=LEFT, padx=5, pady=5)
-        # self.entryDate1 = Entry(dateFrame)
-        # self.entryDate1.pack(side=LEFT, fill=X, padx=5, expand=True)
-        # lblDate2 = Label(dateFrame, text="по:", width=2)
-        # lblDate2.pack(side=LEFT, padx=5, pady=5)
-        # self.entryDate2 = Entry(dateFrame)
-        # self.entryDate2.pack(side=LEFT, fill=X, padx=5, expand=True)
+        dateFrame = Frame(self)
+        dateFrame.pack(side=TOP, fill=X)
+        lblDate1 = Label(dateFrame, text="дата с:", width=8)
+        lblDate1.pack(side=LEFT, padx=5, pady=5)
+        self.entryDate1 = Entry(dateFrame)
+        self.entryDate1.pack(side=LEFT, fill=X, padx=5, expand=True)
+        lblDate2 = Label(dateFrame, text="по:", width=2)
+        lblDate2.pack(side=LEFT, padx=5, pady=5)
+        self.entryDate2 = Entry(dateFrame)
+        self.entryDate2.pack(side=LEFT, fill=X, padx=5, expand=True)
 
 
         self.troubleFrame = Frame(self)
