@@ -1,4 +1,3 @@
-import os
 import shutil
 import threading
 from datetime import datetime
@@ -6,18 +5,10 @@ from tkinter import filedialog, END
 from threading import Thread
 
 from exif import Image
-import ffprobe
-
-
-
-import functools
-import operator
 import os
 import pipes
 import platform
-import re
 import subprocess
-from ffprobe.exceptions import FFProbeError
 
 class Sorter(object):
     def __init__(self, app, entryPatch, entryPatchToExit, procLabel, btnStart, troubleFrame, troublesList, entryDate1, entryDate2):
@@ -187,16 +178,18 @@ class Sorter(object):
 
     def readDataFromImage(self, file, patch, fileType, month_list=[]):
 
+        global metaDate, dateStr
         isFile = 0
         year = 0
         month = 0
-        dateStr = datetime.strptime("1900-01-01", "%Y-%m-%d")
         if fileType == 'jpg' or fileType == 'JPG' or fileType == 'png' or fileType == 'PNG':
             image = Image(patch + "/" + file)
             if image.has_exif:
-                dateStr = image.datetime_original
                 isFile = 1
-                data = str(dateStr).split(':')
+                metaDatePh = image.datetime_original
+                data = str(metaDatePh).split(':')
+                metaDatePhData = str(metaDatePh).split(' ')
+                dateStr = datetime.strptime(metaDatePhData[0], "%Y:%m:%d").date()
                 year = data[0]
                 month = data[1]
 
@@ -214,14 +207,11 @@ class Sorter(object):
                     cmd = ["ffprobe", "-show_streams", path_to_video]
                 else:
                     cmd = ["ffprobe -show_streams " + pipes.quote(path_to_video)]
-
                 p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-
                 stream = False
 
                 for line in iter(p.stdout.readline, b''):
                     line = line.decode('UTF-8')
-
                     if '[STREAM]' in line:
                         stream = True
                     elif '[/STREAM]' in line and stream:
@@ -238,10 +228,7 @@ class Sorter(object):
             year = data[0]
             month = data[1]
 
-
-
-        # if self.startDate.date() <= dateStr.date() and self.endDate.date() >= dateStr.date() and isFile == 1:
-        if isFile == 1:
+        if self.startDate.date() <= dateStr and self.endDate.date() >= dateStr and isFile == 1:
             exitPatch = self.PatchToExit + "/" + year + "/" + month_list[int(month) - 1]
             if not os.path.exists(exitPatch):
                 os.makedirs(exitPatch)
