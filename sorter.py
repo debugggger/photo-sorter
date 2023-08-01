@@ -91,7 +91,7 @@ class Sorter(object):
                 self.countImages += 1
 
         if self.countImages == 0:
-            self.app.messageWindow(self.app.Message.WARNING, "фото не найдены")
+            self.app.messageWindow(self.app.Message.WARNING, "Фото не найдены")
 
     def startSort(self):
         threadSorting = Thread(target=self.sortByData)
@@ -104,21 +104,21 @@ class Sorter(object):
 
         if self.date1 != '':
             try:
-                self.startDate = datetime.strptime(self.date1, "%Y-%m-%d")
+                self.startDate = datetime.strptime(self.date1, "%d.%m.%Y")
             except:
-                self.app.messageWindow(self.app.Message.WARNING, "Укажите дату в формате YYYY-MM-DD")
+                self.app.messageWindow(self.app.Message.WARNING, "Укажите дату в формате DD.MM.YYYY")
                 return
             if self.date2 == '':
                 self.date2 = datetime.now().date()
-
-                self.entryDate2.insert("end", self.date2)
+                date2Str = str(self.date2.day)+"."+str(self.date2.month)+"."+str(self.date2.year)
+                self.entryDate2.insert("end", date2Str)
             else:
                 if self.date2 > datetime.now():
                     self.date2 = datetime.now().date()
                 try:
-                    self.endDate = datetime.strptime(self.date2, "%Y-%m-%d")
+                    self.endDate = datetime.strptime(self.date2, "%d.%m.%Y")
                 except:
-                    self.app.messageWindow(self.app.Message.WARNING, "Укажите дату в формате YYYY-MM-DD")
+                    self.app.messageWindow(self.app.Message.WARNING, "Укажите дату в формате DD.MM.YYYY")
 
 
         self.findImages()
@@ -130,7 +130,7 @@ class Sorter(object):
 
         self.errorCount = 0
         if self.patch == '':
-            self.app.messageWindow(self.app.Message.ASK_START, "не указан путь для поиска файлов\n\nуказать?")
+            self.app.messageWindow(self.app.Message.ASK_START, "Не указан путь для поиска файлов\n\nуказать?")
             return
 
         if self.PatchToExit == '':
@@ -171,7 +171,7 @@ class Sorter(object):
             self.troublesList.insert("end", "\n" + "Файлы размещены в: " + exitErrorPatch + "\n")
             self.troubleFrame.pack()
         else:
-            self.app.messageWindow(self.app.Message.INFO, "обработка успешна завершена")
+            self.app.messageWindow(self.app.Message.INFO, "Обработка успешно завершена")
         self.procLbl.pack_forget()
         self.btnStart.pack()
         self.stopThread.set()
